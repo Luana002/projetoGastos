@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
+import 'theme/app_theme.dart';
+import 'screens/dashboard_screen.dart';
+import 'screens/transactions_screen.dart';
+import 'screens/transaction_form_screen.dart';
+import 'screens/transaction_detail_screen.dart';
+import 'screens/categories_screen.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const FinancasApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class FinancasApp extends StatelessWidget {
+  const FinancasApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+    return MaterialApp(
+      title: 'Finanças Universitárias',
+      theme: AppTheme.light,
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const DashboardScreen(),
+        '/transactions': (context) => const TransactionsScreen(),
+        '/transaction_form': (context) => const TransactionFormScreen(),
+        '/transaction_detail': (context) => const TransactionDetailScreen(),
+        '/categories': (context) => const CategoriesScreen(),
+      },
     );
   }
 }
