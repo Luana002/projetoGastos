@@ -2,76 +2,74 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  final List<Map<String, dynamic>> transacoes;
+  const DashboardScreen({super.key, required this.transacoes});
 
   @override
   Widget build(BuildContext context) {
-    double saldo = 520.75;
-    final categorias = [
-      {'nome': 'Alimentação', 'total': 150.0},
-      {'nome': 'Transporte', 'total': 80.0},
-      {'nome': 'Lazer', 'total': 120.0},
-    ];
+    final hoje = DateTime.now();
+    bool mesmaData(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
+
+    // Filtra apenas despesas cuja data é HOJE
+    final despesasHoje = transacoes.where((t) {
+      final data = t['data'];
+      DateTime d;
+      if (data is DateTime) d = data;
+      else if (data is String) {
+        try {
+          d = DateFormat('dd/MM/yyyy').parse(data);
+        } catch (_) {
+          return false;
+        }
+      } else {
+        return false;
+      }
+      return (t['tipo'] == 'despesa') && mesmaData(d, hoje);
+    }).toList();
+
+    final totalDespesasHoje = despesasHoje.fold<double>(0.0, (s, t) => s + (t['valor'] as double));
+
+    final Map<String, double> categorias = {};
+    for (var t in despesasHoje) {
+      final cat = (t['categoria'] as String?) ?? 'Outros';
+      categorias[cat] = (categorias[cat] ?? 0) + (t['valor'] as double);
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Painel'),
+        title: const Text('App de gastos'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.category),
-            onPressed: () => Navigator.pushNamed(context, '/categories'),
-          ),
+          IconButton(icon: const Icon(Icons.category), onPressed: () => Navigator.pushNamed(context, '/categories')),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            Text(
-              'Resumo do mês',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('Resumo do dia', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 10),
             Card(
-              color: Colors.indigo.shade50,
               child: ListTile(
-                title: const Text('Saldo disponível'),
-                subtitle: Text(
-                  NumberFormat.simpleCurrency(locale: 'pt_BR').format(saldo),
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 18),
-                ),
+                title: const Text('Total gasto hoje'),
+                subtitle: Text(NumberFormat.simpleCurrency(locale: 'pt_BR').format(totalDespesasHoje), style: const TextStyle(fontSize: 18)),
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Gastos por categoria',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            const Text('Gastos por categoria (hoje)', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            ...categorias.map(
-              (cat) => Card(
+            if (categorias.isEmpty)
+              const Text('Nenhuma despesa registrada hoje.')
+            else
+              ...categorias.entries.map((e) => Card(
                 child: ListTile(
-                  title: Text(cat['nome'] as String),
-                  trailing: Text(
-                    NumberFormat.simpleCurrency(locale: 'pt_BR')
-                        .format(cat['total']),
-                  ),
+                  title: Text(e.key),
+                  trailing: Text(NumberFormat.simpleCurrency(locale: 'pt_BR').format(e.value)),
                 ),
-              ),
-            ),
+              )),
             const SizedBox(height: 20),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.list),
-              label: const Text('Ver transações'),
-              onPressed: () => Navigator.pushNamed(context, '/transactions'),
-            ),
+            ElevatedButton.icon(icon: const Icon(Icons.list), label: const Text('Ver transações'), onPressed: () => Navigator.pushNamed(context, '/transactions')),
             const SizedBox(height: 8),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('Nova transação'),
-              onPressed: () => Navigator.pushNamed(context, '/transaction_form'),
-            ),
+            ElevatedButton.icon(icon: const Icon(Icons.add), label: const Text('Nova transação'), onPressed: () => Navigator.pushNamed(context, '/transaction_form')),
           ],
         ),
       ),
